@@ -1,0 +1,26 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: ap-south-1
+    REPOSITORY_URI: 247562657330.dkr.ecr.ap-south-1.amazonaws.com/backend2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 247562657330.dkr.ecr.ap-south-1.amazonaws.com
+      - echo Getting Commit ID...
+      - COMMIT_ID=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_URI=$REPOSITORY_URI:$COMMIT_ID
+
+  build:
+    commands:
+      - echo Building Docker image...
+      - docker build -t $IMAGE_URI .
+
+  post_build:
+    commands:
+      - echo Pushing Docker image to ECR...
+      - docker push $IMAGE_URI
+      - echo Build completed successfully
